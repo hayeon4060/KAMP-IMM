@@ -1,0 +1,16 @@
+# 데이터 (레포에 올리지 않음)
+*.csv
+data/
+notebooks/linked/
+
+# 모델 산출물
+*.keras
+*.h5
+
+# Jupyter / Python
+.ipynb_checkpoints/
+__pycache__/
+
+# Claude 앱 산출물 폴더
+Claude outputs/
+
