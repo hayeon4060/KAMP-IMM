@@ -1,0 +1,12 @@
+﻿# 데이터 원본 — 각자 KAMP에서 내려받아 넣습니다
+data/raw/*
+!data/raw/.gitkeep
+
+# 파이썬 자동 생성물
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 작업용 임시 노트북
+anything.ipynb
+scratch*.ipynb
