@@ -1,0 +1,5 @@
+﻿product,cavity,labeled_rows,gas_rows,normal_rows,gas_per_labeled_row
+CN7,LH,605,3,601,0.0049586776859504135
+CN7,RH,606,10,593,0.0165016501650165
+RG3,LH,591,0,591,0.0
+RG3,RH,591,17,566,0.028764805414551606

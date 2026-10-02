@@ -1,0 +1,9 @@
+gap_minutes,product,runs_with_labels,runs_with_defects,largest_run_bad_share,total_bad_shots
+5,CN7,1,1,1.0,14
+5,RG3,4,4,0.6,25
+10,CN7,1,1,1.0,14
+10,RG3,4,4,0.6,25
+30,CN7,1,1,1.0,14
+30,RG3,3,3,0.6,25
+60,CN7,1,1,1.0,14
+60,RG3,2,2,0.6,25

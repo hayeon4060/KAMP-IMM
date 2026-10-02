@@ -1,0 +1,5 @@
+﻿product,dataset,rows,columns,missing_cells,duplicate_rows,constant_columns
+CN7,labeled,1211,25,0,594,Clamp_Open_Position
+CN7,unlabeled,35239,24,0,6468,
+RG3,labeled,1182,25,0,566,Clamp_Open_Position
+RG3,unlabeled,35941,24,0,6234,

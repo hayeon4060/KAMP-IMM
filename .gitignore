@@ -1,0 +1,8 @@
+.venv/
+tmp/
+__pycache__/
+.ipynb_checkpoints/
+
+# 원본 데이터는 로컬에서만 관리
+data/
+

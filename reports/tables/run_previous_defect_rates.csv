@@ -1,0 +1,5 @@
+product,prev_bad,comparable_shots,bad_shots,bad_rate
+CN7,False,590,4.0,0.006779661016949152
+CN7,True,14,10.0,0.7142857142857143
+RG3,False,560,25.0,0.044642857142857144
+RG3,True,25,0.0,0.0
