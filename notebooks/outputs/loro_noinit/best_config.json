@@ -1,0 +1,10 @@
+{
+ "cn7": {
+  "combo": "T2_static+temporal",
+  "model": "tree"
+ },
+ "rg3": {
+  "combo": "C2_context+event",
+  "model": "tree"
+ }
+}

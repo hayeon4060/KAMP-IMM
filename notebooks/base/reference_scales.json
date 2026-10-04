@@ -1,0 +1,32 @@
+{
+ "cn7": {
+  "steps": {
+   "Max_Injection_Speed": 0.1,
+   "Filling_Time": 0.01,
+   "Max_Injection_Pressure": 0.1,
+   "Max_Switch_Over_Pressure": 0.1,
+   "Average_Back_Pressure": 0.1,
+   "Cushion_Position": 0.01,
+   "Plasticizing_Time": 0.01,
+   "Cycle_Time": 0.01,
+   "Mold_Temperature_3": 0.1,
+   "Hopper_Temperature": 0.1
+  },
+  "fr_step": 0.002172813754306002
+ },
+ "rg3": {
+  "steps": {
+   "Max_Injection_Speed": 0.1,
+   "Filling_Time": 0.01,
+   "Max_Injection_Pressure": 0.1,
+   "Max_Switch_Over_Pressure": 0.1,
+   "Average_Back_Pressure": 0.1,
+   "Cushion_Position": 0.01,
+   "Plasticizing_Time": 0.01,
+   "Cycle_Time": 0.01,
+   "Mold_Temperature_3": 0.1,
+   "Hopper_Temperature": 0.1
+  },
+  "fr_step": 0.0007800312012482546
+ }
+}
