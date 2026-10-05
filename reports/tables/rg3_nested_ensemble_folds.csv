@@ -1,0 +1,9 @@
+﻿scheme,block,train,train_gas,test,test_gas
+leave_one_block_out,20201021_001626_RG3,542,17,41,0
+leave_one_block_out,20201022_002405_RG3,481,13,102,4
+leave_one_block_out,20201022_044026_RG3,390,11,193,6
+leave_one_block_out,20201023_010128_RG3,510,14,73,3
+leave_one_block_out,20201023_044148_RG3,409,13,174,4
+past_blocks_only,20201022_044026_RG3,143,4,193,6
+past_blocks_only,20201023_010128_RG3,336,10,73,3
+past_blocks_only,20201023_044148_RG3,409,13,174,4
