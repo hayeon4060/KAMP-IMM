@@ -26,17 +26,17 @@ Confluence 정리: https://happysally19.atlassian.net/wiki/spaces/~712020d9e86c7
 
 ## 실행 및 입력 준비
 
-기존 `.venv` 활성화 후 노트북을 실행한다. 원본 데이터·PDF는 저작권/크기 때문에 이 커밋에 넣지 않는다. 데이터는 로컬에서 별도 준비해야 한다.
+기존 `.venv` 활성화 후 노트북을 실행한다. 2026-10-06 데이터 보충본에는 실제 사용 RG3 추출 라벨·비라벨 이력·RH 대조표와 파생 센서 테이블을 포함한다. 파일 목록·무결성·실행 안내는 `rg3_selected_candidates_and_data.md`와 125번 검증 노트북을 참고한다. 전체 original 원본과 PDF는 포함하지 않는다.
 
 - `data/original/moldset_labeled.csv`: 기존 범위의 라벨·Timestamp·센서.
 - `data/original/unlabeled_data.csv`: 이전 Shot 센서 이력. 비라벨을 정상으로 새 라벨링하지 않는다.
 - `data/moldset_labeled_cn7.csv`: 10번의 센서 컬럼 목록 확인용.
-- 09 → 10번: 제품별 원본 분리 및 `reports/tables/original_labeled_shot_features.csv` 생성. 이 파생 센서 테이블도 원본에서 재생성하며 Git에는 넣지 않는다.
+- 09 → 10번: 제품별 원본 분리 및 `reports/tables/original_labeled_shot_features.csv` 생성. 보충본에는 기존 생성 결과를 동봉하므로 모델 실행 전에 이 추출 단계를 다시 돌릴 필요는 없다. 전체 원본에서 재추출하려면 위 원본 파일이 별도로 필요하다.
 - 22번은 기존 `rg3_relational_feature_oof_predictions.csv`를 마지막 재현 비교에 사용한다. 기존 16번 노트북으로 해당 비교 파일을 생성하거나 별도 준비한다.
 - 핵심 순서: 22 → 42 → 46 → 47 → 54 → 56 → 57 → 58 → 59 → 60. 50~53은 메커니즘 탐색 기록, 55·61은 결과 감사다.
 - 61번 원본 대조에는 로컬 `data/audit/rg3_rh_labeled_with_timestamp.csv`가 필요하다. 해당 파일이 없으면 먼저 기존 Timestamp 추출 절차로 준비해야 한다.
 
-저장된 예측/점수 CSV는 중간 앵커를 재사용하는 기존 노트북의 입력이기도 하다. 이 커밋은 전체 저장소를 무데이터 상태에서 자동 실행하는 새 파이프라인을 제공하지 않는다. 새 환경에서는 원본 준비 및 위 실행 순서가 필요하다.
+저장된 예측/점수 CSV는 중간 앵커를 재사용하는 기존 노트북의 입력이기도 하다. 보충본의 데이터와 함께 모델 단계부터 위 실행 순서를 따를 수 있다. 전체 원본 추출까지 포함한 새 one-click 파이프라인이나 공식 제출 모델을 제공하는 것은 아니다.
 
 ## 근거와 출처
 

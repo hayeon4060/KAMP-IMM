@@ -1,0 +1,5 @@
+﻿candidate,TP,FP,FN,TN,F1,precision,recall,evaluation
+22_RF_baseline,4,6,13,560,0.2962962962962963,0.4,0.23529411764705882,development_leave_one_block_out
+47_innovation_seed_mean,5,6,12,560,0.35714285714285715,0.45454545454545453,0.29411764705882354,development_leave_one_block_out
+60_temperature_majority_pressure,7,6,10,560,0.4666666666666667,0.5384615384615384,0.4117647058823529,development_leave_one_block_out
+60_thermal_anchor_pressure,8,6,9,560,0.5161290322580645,0.5714285714285714,0.47058823529411764,development_leave_one_block_out
