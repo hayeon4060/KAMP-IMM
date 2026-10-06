@@ -34,7 +34,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.covariance import LedoitWolf
-from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import average_precision_score, precision_recall_curve, auc
 
 # ====================================================================== 설정 (결과 보기 전에 고정한 값)
 SEED = 42
@@ -49,8 +49,11 @@ CLIP = 20
 QS = (0.95, 0.98, 0.99, 0.995, 0.999)
 INITIAL = '초기허용불량'
 TYPE_GROUPS = {'가스': ['가스'], '미성형': ['미성형', '가스+미성형']}
-# 18_final_compare 결과 (재현 확인용)
-EXPECTED = {('cn7', '①'): 0.373, ('rg3', '①'): 0.024, ('cn7', '②'): 0.212, ('rg3', '②'): 0.064}
+# 평가에서 뺄 Run (팀 결정): RG3 R6(2020-11-04)은 공식 2차 범위 밖 → 제외 (공식 2차 기준 가스 17 / 미성형 8)
+#   학습(reference)에서는 원래대로 이 시간대도 빼 둠 (누수 방지), 파생변수는 전체 시간 흐름으로 계산
+EXCLUDE_RUNS = {'rg3': ['rg3_R6']}
+# 18_final_compare 결과 (재현 확인용). RG3 ②는 R6 제외로 값이 바뀌어 비교 생략(None)
+EXPECTED = {('cn7', '①'): 0.373, ('rg3', '①'): 0.024, ('cn7', '②'): 0.212, ('rg3', '②'): None}
 
 raw = lambda c: f'{c}_raw'
 ALL_RAW = ['Injection_Time', 'Filling_Time', 'Plasticizing_Time', 'Cycle_Time', 'Clamp_Close_Time',
@@ -72,10 +75,21 @@ FEATURES = ([f'dev_{v}' for v in EVENT_VARS]                                    
 
 
 # ====================================================================== 1. 데이터
+def apply_exclusions(d, p):
+    """EXCLUDE_RUNS의 Run을 split='제외'로 표시 → 평가·지도학습 대상에서 빠짐 (행은 남겨 파생변수 흐름 유지)"""
+    ex = EXCLUDE_RUNS.get(p, [])
+    if ex and 'run_id' in d.columns:
+        d = d.copy()
+        if 'split' not in d.columns:
+            d['split'] = ''
+        d.loc[d['run_id'].isin(ex), 'split'] = '제외'
+    return d
+
+
 def load_labeled_shots(p, base_dir='.'):
     s = pd.read_csv(f'{base_dir}/base/{p}_shots.csv', parse_dates=['TimeStamp'])
     s['Reason'] = s['Reason'].fillna('정상')
-    return s.sort_values('TimeStamp').reset_index(drop=True)
+    return apply_exclusions(s.sort_values('TimeStamp').reset_index(drop=True), p)
 
 
 def load_official_rows(p, base_dir='.'):
@@ -333,6 +347,15 @@ def recall_at_k_by_run(g, k, pos_mask):
     return hit, tot
 
 
+def pr_auc_trapz(y, s):
+    """
+    PR-AUC (사다리꼴 적분) = PR 곡선 아래 면적을 점 사이 직선으로 이어 계산
+    AP(average precision)도 PR-AUC의 한 계산법(계단식). 불량이 적으면 사다리꼴은 AP보다 다소 낙관적으로 나옴
+    """
+    pr, rc, _ = precision_recall_curve(y, s)
+    return auc(rc, pr)
+
+
 def eval_frame1(p, rows, shot_score):
     """① 공식 2차 · 행 단위 — 팀원 evaluate() 지표 + 예산 F1"""
     y = rows['PassOrFail'].values.astype(int)
@@ -343,7 +366,8 @@ def eval_frame1(p, rows, shot_score):
     pr, rc, _ = precision_recall_curve(y, s)
     with np.errstate(invalid='ignore', divide='ignore'):
         f1_best = float(np.nanmax(2 * pr * rc / (pr + rc)))
-    r = {'제품': p, '행': len(y), '불량 행': int(y.sum()), 'AP': ap, '무작위 평균 대비': ap / rmean,
+    r = {'제품': p, '행': len(y), '불량 행': int(y.sum()), 'AP': ap, 'PR-AUC(사다리꼴)': pr_auc_trapz(y, s),
+         '무작위 PR-AUC(=불량률)': y.mean(), '무작위 평균 대비': ap / rmean,
          '무작위 상단(97.5%)': rhi, '유의': 'O' if ap > rhi else '-'}
     o = _order(s)
     for k in (1, 2, 5, 10):
@@ -364,7 +388,8 @@ def eval_frame2(p, g):
     y = g['y'].values
     ap, lo, hi = ap_ci(y, g['score'].values)
     r = {'제품': p, '샷': len(g), '불량': int(y.sum()), '불량률': y.mean(),
-         'AP': ap, 'AP_lo': lo, 'AP_hi': hi, 'AP/불량률': ap / y.mean()}
+         'AP': ap, 'AP_lo': lo, 'AP_hi': hi, 'AP/불량률': ap / y.mean(),
+         'PR-AUC(사다리꼴)': pr_auc_trapz(y, g['score'].values)}
     pos = g['y'] == 1
     for k in (0.05, 0.10):
         h, t = recall_at_k_by_run(g, k, pos)
@@ -407,10 +432,13 @@ def train(base_dir='.', products=PRODUCTS, out_dir='./outputs/final_model', verb
     """
     [학습] unlabeled만 사용 — 라벨 0개
       reference 생성 → 파생변수 → FinalModel.fit → {p}_final_model.pkl 저장
-    반환: {'data_log': 처리 단계별 샷 수, 'params': 변수별 학습 통계, 'models': {p: FinalModel}}
+      모델에 실제로 들어간 학습 데이터 → {p}_train_features.csv 저장
+        (Run·시각 + 원값 21개 + 파생변수 17개 + 학습 데이터 자신의 점수·백분위)
+    반환: {'data_log': 처리 단계별 샷 수, 'params': 변수별 학습 통계, 'models': {p: FinalModel},
+           'train_features': {p: 학습 데이터 DataFrame}}
     """
     os.makedirs(out_dir, exist_ok=True)
-    LOG, PAR, MODELS = [], [], {}
+    LOG, PAR, MODELS, TRAIN = [], [], {}, {}
     for p in products:
         shots = load_labeled_shots(p, base_dir)                   # labeled는 '시간대 제거'에만 사용 (라벨 X)
         ref_shots, log = build_reference(p, shots, base_dir)
@@ -424,14 +452,24 @@ def train(base_dir='.', products=PRODUCTS, out_dir='./outputs/final_model', verb
         model.save(f'{out_dir}/{p}_final_model.pkl')
         MODELS[p] = model
 
+        # 모델에 실제로 들어간 학습 데이터 저장 (재현성·검토용)
+        tf = ref_feat[['run_id', 'TimeStamp'] + [raw(v) for v in ALL_RAW if raw(v) in ref_feat.columns]
+                      + FEATURES].copy()
+        tf['score'] = model.score(ref_feat)
+        tf['pct'] = model.pct(tf['score'])
+        tf.sort_values(['run_id', 'TimeStamp']).to_csv(f'{out_dir}/{p}_train_features.csv', index=False,
+                                                        encoding='utf-8-sig')
+        TRAIN[p] = tf
+
         log.update({'제품': p, '기준값 출처': src, '학습 샷(최종)': model.n_ref,
                     'Ledoit-Wolf 축소계수': float(model.lw.shrinkage_)})
         LOG.append(log)
         PAR.append(pd.DataFrame({'제품': p, '변수': model.cols, '중앙값': model.med, 'IQR(스케일)': model.iqr}))
         if verbose:
             print(f'[{p}] 학습 완료: reference {model.n_ref:,}샷, 변수 {len(model.cols)}개 '
-                  f'→ {out_dir}/{p}_final_model.pkl')
-    T = {'data_log': pd.DataFrame(LOG), 'params': pd.concat(PAR, ignore_index=True), 'models': MODELS}
+                  f'→ {out_dir}/{p}_final_model.pkl, {p}_train_features.csv')
+    T = {'data_log': pd.DataFrame(LOG), 'params': pd.concat(PAR, ignore_index=True), 'models': MODELS,
+         'train_features': TRAIN}
     T['data_log'].to_csv(f'{out_dir}/data_log.csv', index=False, encoding='utf-8-sig')
     T['params'].to_csv(f'{out_dir}/train_params.csv', index=False, encoding='utf-8-sig')
     return T
@@ -443,7 +481,7 @@ def test(base_dir='.', products=PRODUCTS, out_dir='./outputs/final_model', verbo
       파생변수 기준값(기록 단위 등)도 모델에 저장된 학습 때 값을 그대로 사용
     반환: frame1, frame2, threshold, check, scores
     """
-    F1, F2, TH, CHK, SCORES = [], [], [], [], {}
+    F1, F2, TH, CHK, SCORES, OP = [], [], [], [], {}, []
     for p in products:
         path = f'{out_dir}/{p}_final_model.pkl'
         if not os.path.exists(path):
@@ -468,19 +506,25 @@ def test(base_dir='.', products=PRODUCTS, out_dir='./outputs/final_model', verbo
                           'Reason': f2['Reason'].values, 'score': f2['score'].values, 'pct': f2['pct'].values})
         F2.append(eval_frame2(p, g))
         TH.append(threshold_table(p, g))
+        # 운영 기준별 Precision·Recall·F1 + 유형별 몇 개 중 몇 개 (검사 상위 5·10%, 경보 q0.99·0.999)
+        from op_metrics import op_table
+        L = lab_feat.assign(eval=((lab_feat['split'] != '제외') if 'split' in lab_feat.columns else True)
+                            & (lab_feat['Reason'] != INITIAL))
+        OP.append(op_table(L, L['score'].values, L['pct'].values).assign(제품=p))
         if verbose:
             print(f'[{p}] 테스트 완료: labeled {len(lab_feat):,}샷 점수')
 
     R = {'frame1': pd.DataFrame(F1), 'frame2': pd.DataFrame(F2),
-         'threshold': pd.concat(TH, ignore_index=True), 'scores': SCORES}
+         'threshold': pd.concat(TH, ignore_index=True), 'scores': SCORES,
+         'operating': pd.concat(OP, ignore_index=True)}
     for p in products:                                                 # 재현 확인 (18번 수치와 비교)
         for fr, tbl in (('①', R['frame1']), ('②', R['frame2'])):
             ap = float(tbl.loc[tbl['제품'] == p, 'AP'].iloc[0])
             exp = EXPECTED.get((p, fr))
             CHK.append({'제품': p, '틀': fr, 'AP(이번)': round(ap, 3), 'AP(18번)': exp,
-                        '일치': 'O' if exp is not None and abs(ap - exp) < 0.0015 else '확인 필요'})
+                        '일치': ('-' if exp is None else 'O' if abs(ap - exp) < 0.0015 else '확인 필요')})
     R['check'] = pd.DataFrame(CHK)
-    for k in ('frame1', 'frame2', 'threshold', 'check'):
+    for k in ('frame1', 'frame2', 'threshold', 'check', 'operating'):
         R[k].to_csv(f'{out_dir}/{k}.csv', index=False, encoding='utf-8-sig')
     return R
 
@@ -491,6 +535,53 @@ def run_all(base_dir='.', products=PRODUCTS, out_dir='./outputs/final_model', ve
     R = test(base_dir, products, out_dir, verbose)
     R.update({'data_log': T['data_log'], 'params': T['params'], 'models': T['models']})
     return R
+
+
+# ====================================================================== 5-1. PR 곡선
+def plot_pr(R, base_dir='.', products=PRODUCTS, qs=(0.99, 0.999), save_dir=None):
+    """
+    제품 × 평가 틀별 PR 곡선 (test() 결과 R 사용)
+      회색 점선 = 무작위(불량률), 점 = 라벨 없이 정한 임계값 q의 운영점 (② 틀)
+    """
+    import matplotlib.pyplot as plt
+    try:
+        from plot_style import set_style
+        set_style()
+    except ImportError:
+        pass
+    fig, axes = plt.subplots(len(products), 2, figsize=(11, 4.2 * len(products)), squeeze=False)
+    for i, p in enumerate(products):
+        f = R['scores'][p]
+        shot = pd.Series(f['score'].values, index=f['TimeStamp'].values)
+        rows = load_official_rows(p, base_dir)
+        y1 = rows['PassOrFail'].values.astype(int)
+        s1 = rows['TimeStamp'].map(shot).fillna(0).values
+        m2 = ((f['split'] != '제외') & (f['Reason'] != INITIAL)).values
+        y2 = f['PassOrFail'].values[m2].astype(int)
+        s2 = f['score'].values[m2]
+        pc2 = f['pct'].values[m2]
+        for j, (y, s, title) in enumerate([(y1, s1, '① 공식 2차 · 행'), (y2, s2, '② 전체 · 샷 (초기허용 제외)')]):
+            ax = axes[i, j]
+            pr, rc, _ = precision_recall_curve(y, s)
+            ax.step(rc, pr, where='post', color='#1f4e79', lw=1.8,
+                    label=f'최종 모델  AP {average_precision_score(y, s):.3f} · PR-AUC {auc(rc, pr):.3f}')
+            ax.axhline(y.mean(), ls='--', color='#9a9a9a', lw=1, label=f'무작위 = 불량률 {y.mean():.3f}')
+            if j == 1:
+                for q, mk in zip(qs, ('o', 's')):
+                    pred = pc2 >= q
+                    tp = int((pred & (y == 1)).sum())
+                    if pred.sum():
+                        ax.plot(tp / y.sum(), tp / pred.sum(), mk, color='#c0392b', ms=7,
+                                label=f'q={q} 운영점 (경보 {int(pred.sum())}, 적중 {tp})')
+            ax.set_xlim(0, 1.02); ax.set_ylim(0, 1.02)
+            ax.set_xlabel('재현율 (Recall)'); ax.set_ylabel('정밀도 (Precision)')
+            ax.set_title(f'{p.upper()} — {title}', loc='left', fontsize=10)
+            ax.legend(fontsize=8, loc='upper right')
+    fig.tight_layout()
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        fig.savefig(f'{save_dir}/pr_curves.png', dpi=150, bbox_inches='tight')
+    plt.show()
 
 
 # ====================================================================== 6. (참고) 저장된 모델로 새 샷 점수
