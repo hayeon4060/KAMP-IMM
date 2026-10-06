@@ -1,0 +1,3 @@
+﻿scheme,shots,gas,TP,FP,FN,TN,F1,baseline_TP,baseline_FP,new_false_alarms
+leave_one_block_out,583,17,5,6,12,560,0.35714285714285715,4,6,0
+past_blocks_only,440,13,3,4,10,423,0.3,2,4,0

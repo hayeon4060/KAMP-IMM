@@ -1,0 +1,11 @@
+﻿scheme,model,TP,FP,FN,TN,F1
+leave_one_block_out,seed42,5,6,12,560,0.35714285714285715
+leave_one_block_out,seed7,4,6,13,560,0.2962962962962963
+leave_one_block_out,seed101,5,6,12,560,0.35714285714285715
+leave_one_block_out,three_seed_mean,5,6,12,560,0.35714285714285715
+leave_one_block_out,three_seed_median,5,6,12,560,0.35714285714285715
+past_blocks_only,seed42,3,4,10,423,0.3
+past_blocks_only,seed7,2,4,11,423,0.21052631578947367
+past_blocks_only,seed101,3,4,10,423,0.3
+past_blocks_only,three_seed_mean,3,4,10,423,0.3
+past_blocks_only,three_seed_median,3,4,10,423,0.3

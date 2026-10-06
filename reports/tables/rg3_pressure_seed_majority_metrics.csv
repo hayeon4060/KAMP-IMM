@@ -1,0 +1,5 @@
+﻿scheme,anchor,TP,FP,FN,TN,F1
+leave_one_block_out,exploratory54,8,6,9,560,0.5161290322580645
+leave_one_block_out,majority57,7,6,10,560,0.4666666666666667
+past_blocks_only,exploratory54,3,4,10,423,0.3
+past_blocks_only,majority57,3,4,10,423,0.3
