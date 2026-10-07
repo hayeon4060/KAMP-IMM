@@ -1,0 +1,13 @@
+{
+  "artifact_sha_verified": true,
+  "fixture_rows": 5,
+  "fixture_matches": true,
+  "no_inference_fit": true,
+  "batch_invariant": true,
+  "label_invariant": true,
+  "missing_history_abstains": true,
+  "unsupported_equipment_abstains": true,
+  "cascade_interface_routing": true,
+  "shortshot_model_connected": false,
+  "independent_quality_validation": false
+}

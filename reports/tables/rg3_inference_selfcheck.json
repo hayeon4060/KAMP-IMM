@@ -1,0 +1,13 @@
+{
+  "model_sha_verified": true,
+  "old_unlabeled_predictions_reproduced": 287,
+  "cohort": 29236,
+  "ready": 28710,
+  "abstain": 526,
+  "batch_invariant": true,
+  "label_invariant": true,
+  "missing_history_abstains": true,
+  "unsupported_equipment_abstains": true,
+  "shortshot_connected": false,
+  "independent_quality_validation": false
+}

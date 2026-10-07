@@ -1,5 +1,11 @@
 # KAMP-IMM
 
+## RG3 추론 실행 (하연)
+
+[155번 새 데이터 추론 노트북](notebooks/155_rg3_new_data_inference.ipynb)에서 동봉 가스 모델과 입력 예제로 바로 실행할 수 있습니다. 추론 시 재학습·평가 정답·저장 예측 CSV는 필요하지 않습니다. [사용 안내](reports/rg3_inference_usage.md)와 [156번 실행 검증](notebooks/156_rg3_inference_selfcheck.ipynb)을 참고하세요.
+
+현재는 S14/RG3 가스 추론까지 제공하며, 최고 미성형 모델의 원본 소스를 기다리고 있습니다. 가스 음성은 `미성형 모델 미연결`로 표시하며 정상 확정으로 취급하지 않습니다.
+
 > **2026 KAMP 제조 데이터 분석 경진대회** — 사출성형(Injection Molding Machine) 과제 팀 레포
 
 ---
