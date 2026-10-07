@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-07",
+  "scope": "archive of staged Git files only, no external machine-specific inputs",
+  "existing_notebooks_executed": [133, 139, 141, 143, 152, 153],
+  "all_stages_passed": true,
+  "existing_unlabeled_application_145_passed": true,
+  "unlabeled_inference_rows": 16733,
+  "unlabeled_quality_metrics_evaluable": false,
+  "gas_only": {"TP": 8, "FP": 6, "FN": 9, "TN": 560, "F1": 0.5161290322580645},
+  "shortshot_only": {"TP": 6, "FP": 11, "FN": 2, "TN": 555, "F1": 0.48},
+  "cascade_all_defects": {"TP": 14, "FP": 17, "FN": 11, "TN": 549, "F1": 0.5},
+  "model_algorithm_changed": false,
+  "absolute_data_paths_replaced_with_repository_relative_paths": true,
+  "independent_quality_validation": false,
+  "validation": "reproduction of development held-out-block predictions, not unseen quality labels"
+}

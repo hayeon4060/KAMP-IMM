@@ -2,9 +2,11 @@
 
 ## RG3 추론 실행 (하연)
 
+이미 연결된 가스→미성형 코드를 다시 실행하려면 [157번 기존 파이프라인 실행 노트북](notebooks/157_rg3_existing_connected_pipeline_runner.ipynb)을 사용하세요. 누락되어 있던133/139/141 소스·공통 로더·입력 파일을 함께 제공합니다. [실행 순서와 범위](reports/rg3_existing_pipeline_reproduction.md)를 참고하세요.
+
 [155번 새 데이터 추론 노트북](notebooks/155_rg3_new_data_inference.ipynb)에서 동봉 가스 모델과 입력 예제로 바로 실행할 수 있습니다. 추론 시 재학습·평가 정답·저장 예측 CSV는 필요하지 않습니다. [사용 안내](reports/rg3_inference_usage.md)와 [156번 실행 검증](notebooks/156_rg3_inference_selfcheck.ipynb)을 참고하세요.
 
-현재는 S14/RG3 가스 추론까지 제공하며, 최고 미성형 모델의 원본 소스를 기다리고 있습니다. 가스 음성은 `미성형 모델 미연결`로 표시하며 정상 확정으로 취급하지 않습니다.
+155번은 S14/RG3 저장 가스 모델의 새 입력 추론입니다. 이 경로의 가스 음성은 `미성형 모델 미연결`로 표시합니다. 기존 최고 미성형·가스 연결의 학습/개발 평가 재실행은157번, 기존 미성형 비라벨 적용은145번으로 구분합니다.
 
 > **2026 KAMP 제조 데이터 분석 경진대회** — 사출성형(Injection Molding Machine) 과제 팀 레포
 
