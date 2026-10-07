@@ -1,0 +1,3 @@
+﻿evaluation,shots,TP,FP,FN,TN,precision,recall,F1,candidate
+final_any_defect_591,591,13,16,12,550,0.4482758620689655,0.52,0.4814814814814814,gas + shared-history shortshot (151)
+final_any_defect_591,591,14,17,11,549,0.45161290322580644,0.56,0.5,gas + highest-F1 shortshot (143)

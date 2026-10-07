@@ -1,0 +1,9 @@
+﻿TimeStamp,block,type,gas_prediction,run_id,shortshot_actual_type,shortshot_prediction,A,B,C,D,stage2_checked,stage2_flag,final_defect,predicted_type
+2020-10-22 01:09:23,20201022_002405_RG3,미성형,0,rg3_R2,미성형,0,0,0,0,0,True,False,False,정상
+2020-10-22 04:48:39,20201022_044026_RG3,미성형,0,rg3_R3,미성형,1,1,0,0,0,True,True,True,미성형
+2020-10-22 05:42:13,20201022_044026_RG3,미성형,0,rg3_R3,미성형,1,0,0,0,1,True,True,True,미성형
+2020-10-22 06:12:03,20201022_044026_RG3,미성형,0,rg3_R3,미성형,1,1,0,0,0,True,True,True,미성형
+2020-10-22 06:58:22,20201022_044026_RG3,미성형,0,rg3_R3,미성형,1,0,1,0,0,True,True,True,미성형
+2020-10-23 02:25:54,20201023_010128_RG3,미성형,0,rg3_R4,미성형,0,0,0,0,0,True,False,False,정상
+2020-10-23 05:47:40,20201023_044148_RG3,미성형,0,rg3_R5,미성형,1,0,0,1,0,True,True,True,미성형
+2020-10-23 05:54:52,20201023_044148_RG3,미성형,0,rg3_R5,미성형,1,0,0,1,0,True,True,True,미성형

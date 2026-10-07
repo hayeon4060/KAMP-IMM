@@ -1,0 +1,14 @@
+{
+  "evaluation": "frozen development held-out-block predictions, not unseen final test",
+  "gas_source": "C:\\Users\\hayeon\\.codex\\worktrees\\b365\\KAMP-IMM\\reports\\tables\\rg3_152_gas_shortshot_cascade_predictions.csv",
+  "shortshot_source": "C:\\Users\\hayeon\\.codex\\worktrees\\b365\\KAMP-IMM\\reports\\tables\\rg3_shortshot_143_fixed_candidate_predictions.csv",
+  "gas_sha256": "f47e8fddb5a30ac942576d1841a5af717514fe1d68b1967d31822824362c4a84",
+  "shortshot_sha256": "fe4ceef3181229cdee2c8c6d6485598f03aab399cbdff064e1f3b7ac83ba9114",
+  "cohort": {
+    "normal": 566,
+    "gas": 17,
+    "shortshot": 8
+  },
+  "shortshot_candidate": "fixed A|B|C|D, notebook 143; historical mixed sensor-history definitions; unlabeled transport not established",
+  "stage_routing": "gas prediction first; shortshot prediction only if gas negative"
+}
