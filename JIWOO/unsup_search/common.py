@@ -10,7 +10,11 @@ common.py — 비라벨 구간 탐색 공용: 경로, 비라벨 캐시 구축, �
 """
 import os
 import sys
-os.environ.setdefault('JOBLIB_TEMP_FOLDER', 'C:/Users/Public/joblib_tmp')   # 사용자 경로(한글)면 loky 오류
+import tempfile
+if 'JOBLIB_TEMP_FOLDER' not in os.environ and not tempfile.gettempdir().isascii():
+    # 임시 폴더 경로에 한글이 있으면 joblib(loky)이 오류 → 공용 폴더(ASCII) 아래로 (경로는 환경변수에서 읽음)
+    os.environ['JOBLIB_TEMP_FOLDER'] = os.path.join(os.environ.get('PUBLIC', os.environ.get('SystemDrive', 'C:') + os.sep),
+                                                    'joblib_tmp')
 import json
 import time
 import numpy as np
