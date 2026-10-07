@@ -123,4 +123,4 @@ for p in ('cn7', 'rg3'):
             res_all[key] = dict(out, phys=chk)
             print(key, json.dumps(out, ensure_ascii=False), chk, flush=True)
 (EXP / 'explore').mkdir(parents=True, exist_ok=True)
-json.dump(res_all, open(EXP / 'explore' / 'pinn_result.json', 'w'), ensure_ascii=False, indent=1)
+json.dump(res_all, open(EXP / 'explore' / 'pinn_result.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

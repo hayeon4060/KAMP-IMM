@@ -7,13 +7,20 @@
                               Maha+보정확률 AP CN7 전향 0.813·공식 0.194, ledger_v1.csv SHA-256 앞 16자 c107e5a443f110ff
     κ=20 (민감도)           : CN7 BSS 전향 0.297 / 공식 OOF 0.063, Maha+보정확률 AP CN7 전향 0.836·공식 0.193,
                               ledger_v1.csv SHA-256 앞 16자 221ec962e52fd43d
+- 원장 판정은 값 지문(ledger.value_fingerprint)으로 한다: 실수가 아닌 열의 해시는 완전 일치, 실수 열의 가중합은 상대오차 1e-9 이내.
+  기준값은 src/ledger_ref.json. 바이트 해시는 운영체제·CPU에 따라 부동소수 마지막 자리가 달라지면 바뀔 수 있으므로
+  참고로만 출력한다(기준 환경: 리눅스, Python 3.11).
 """
 import json
 import os
+from pathlib import Path
 
 import pandas as pd
 
 from paths import LEDGER, PROB
+
+FP_REF = Path(__file__).resolve().parent / 'ledger_ref.json'
+FP_RTOL = 1e-9
 
 TOL = 0.0015
 REF_HEADLINE = {
@@ -43,7 +50,7 @@ def main():
         ok = (got == ref) if exact else (got is not None and abs(float(got) - float(ref)) <= TOL)
         rows.append(dict(항목=item, 기준=ref, 재생성=got, 판정='PASS' if ok else 'FAIL'))
 
-    H = json.load(open(LEDGER / 'headline_v1.json'))
+    H = json.load(open(LEDGER / 'headline_v1.json', encoding='utf-8'))
     for key, ref in REF_HEADLINE.items():
         for k, v in ref.items():
             add(f'{key}.{k}', v, H['headline'][key][k], exact=(k != 'AP_score'))
@@ -58,13 +65,23 @@ def main():
     if ref_k is None:
         print(f'κ={kappa:g}: 확률 지표 기준값 없음 → 점수 기반 항목만 확인')
     else:
-        S = json.load(open(PROB / 'prob_summary.json'))
+        S = json.load(open(PROB / 'prob_summary.json', encoding='utf-8'))
         for (p, tag), v in ref_k['bss'].items():
             add(f'{p.upper()} BSS {tag} (κ={kappa:g})', v, S[p]['rows'][tag]['BSS'], exact=False)
         for (prod, per, m), v in ref_k['compare'].items():
             add(f'compare AP {prod} {per} {m} (κ={kappa:g})', v, cmp_ap(prod, per, m), exact=False)
-        if ref_k['ledger_sha']:
-            add(f'ledger_v1.csv SHA-256[:16] = 동결 원장 (κ={kappa:g})', ref_k['ledger_sha'], sha, exact=True)
+        fp = H.get('ledger_fingerprint', {})
+        ref_fp = json.load(open(FP_REF, encoding='utf-8')).get(f'{kappa:g}') if FP_REF.exists() else None
+        if ref_fp is None:
+            rows.append(dict(항목=f'ledger_v1.csv 값 지문 = 동결 원장 (κ={kappa:g})', 기준='(없음)', 재생성=fp.get('exact'), 판정='FAIL'))
+        else:
+            rel = max(abs(fp['wsum'].get(c, float('nan')) - v) / max(abs(v), 1e-12) for c, v in ref_fp['wsum'].items())
+            ok = fp.get('exact') == ref_fp['exact'] and set(fp['wsum']) == set(ref_fp['wsum']) and rel <= FP_RTOL
+            rows.append(dict(항목=f'ledger_v1.csv 값 지문 = 동결 원장 (κ={kappa:g})',
+                             기준=f"{ref_fp['exact']} / 실수 {len(ref_fp['wsum'])}열",
+                             재생성=f"{fp.get('exact')} / 최대 상대오차 {rel:.1e}", 판정='PASS' if ok else 'FAIL'))
+        same = '일치' if sha == ref_k['ledger_sha'] else '불일치(다른 운영체제·CPU면 정상일 수 있음, 판정은 값 지문)'
+        print(f'참고: ledger_v1.csv 바이트 SHA-256[:16] {sha} — 기준 환경 {ref_k["ledger_sha"]}와 {same}')
 
     R = pd.DataFrame(rows)
     R.to_csv(LEDGER / 'selfcheck.csv', index=False, encoding='utf-8-sig')

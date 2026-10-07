@@ -53,7 +53,7 @@ def main():
     rep[f'p_shot 단조성 위반 {mono_bad} 해석'] = ("전부 런 경계 교차 — LORO 설계상 런마다 보정기가 달라 "
                                            "기간 전체 단조성은 성립하지 않는 것이 정상") if (bad_off + bad_ext) == 0 \
         else "보정기 내부 위반 존재 — 확인 필요"
-    json.dump(rep, open(LEDGER / 'audit_v1.json', 'w'), ensure_ascii=False, indent=1)
+    json.dump(rep, open(LEDGER / 'audit_v1.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('  ' + json.dumps(rep, ensure_ascii=False))
     return rep
 

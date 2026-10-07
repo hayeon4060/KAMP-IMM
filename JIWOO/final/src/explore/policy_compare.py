@@ -68,7 +68,7 @@ for prod, per in (('CN7', 'official'), ('CN7', 'extra'), ('RG3', 'official'), ('
     for (sp, m), v in o.items():
         print(f'  {sp} {m:2s} 평균 {v["mean"]:5.2f} 최저 {v["min"]:2d} 5% {v["p5"]:4.0f} | 놓침률 {v["miss"]}')
     ALL[f'{prod}_{per}'] = {f'{sp}_{m}': v for (sp, m), v in o.items()}
-json.dump(ALL, open(OUTX / 'policy_result.json', 'w'), ensure_ascii=False, indent=1, default=str)
+json.dump(ALL, open(OUTX / 'policy_result.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=str)
 
 rows = []
 for k, d in ALL.items():

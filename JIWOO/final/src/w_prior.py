@@ -32,7 +32,7 @@ def main():
                                    share_LH=round(float(s.get("LH", 0) / tot), 4),
                                    share_RH=round(float(s.get("RH", 0) / tot), 4))
         print(f'  {prod}', prior[prod.lower()])
-    json.dump(prior, open(W_PRIOR, "w"), indent=1)
+    json.dump(prior, open(W_PRIOR, "w", encoding='utf-8'), indent=1)
     return prior
 
 

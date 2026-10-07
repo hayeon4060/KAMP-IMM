@@ -66,7 +66,7 @@ def main():
         for c in ["s", "alarm", "rank_in_period", "since_restart", "top3"]:
             Le[c] = Le.TimeStamp.map(m[c])
         row_tabs.append(Le)
-    json.dump(res, open(EXP / "prospective.json", "w"), ensure_ascii=False, indent=1, default=int)
+    json.dump(res, open(EXP / "prospective.json", "w", encoding='utf-8'), ensure_ascii=False, indent=1, default=int)
     R = pd.concat(row_tabs)
     R = R.rename(columns={"_id": "원본_id", "prod": "제품", "TimeStamp": "쇼트시각", "side": "좌우", "s": "이탈도점수",
                           "alarm": "검사대상", "rank_in_period": "검사우선순위", "since_restart": "재기동후쇼트",

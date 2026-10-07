@@ -35,7 +35,7 @@ def main():
         ok = (got == ref) if tol is None else (got is not None and abs(float(got) - float(ref)) <= tol)
         rows.append(dict(실험=item.split(' ')[0], 항목=item, 기준=ref, 재생성=got, 판정='PASS' if ok else 'FAIL'))
 
-    A = {(r['prod'], r['method']): r for r in json.load(open(EXP / 'label_shuffle.json'))}
+    A = {(r['prod'], r['method']): r for r in json.load(open(EXP / 'label_shuffle.json', encoding='utf-8'))}
     for key, ref in REF_SHUFFLE.items():
         r = A[key]; sh = np.array(r['shuf'])
         nm = f'A {key[0]} {key[1]}'
@@ -43,7 +43,7 @@ def main():
         add(f'{nm} F1(섞은 라벨 평균)', ref['shuf_mean'], round(float(sh.mean()), 6), TOL)
         add(f'{nm} 섞기 횟수', ref['n_shuf'], len(sh))
         add(f'{nm} 순열 p', ref['p'], round(float((np.sum(sh >= r['real']) + 1) / (len(sh) + 1)), 6), TOL)
-    B = json.load(open(EXP / 'prospective.json'))
+    B = json.load(open(EXP / 'prospective.json', encoding='utf-8'))
     for p, ref in REF_PROSPECTIVE.items():
         for k, v in ref.items():
             tol = 1e-5 if k == 'fisher_p' else (TOL if isinstance(v, float) else None)

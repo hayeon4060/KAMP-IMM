@@ -14,7 +14,7 @@ from paths import EXP
 
 def fig_a():
     setup(10)
-    R = json.load(open(EXP / "label_shuffle.json"))
+    R = json.load(open(EXP / "label_shuffle.json", encoding='utf-8'))
     BLUE, GRAY, INK, INK2, SURF = "#2a78d6", "#a8a7a1", "#0b0b0b", "#52514e", "#fcfcfb"
     NAMES = {"guidebook": "분할 전 SMOTE 절차 (가이드북 수치 재현)\nSMOTE → RF → 무작위 5-fold",
              "honest_rf": "지도학습 RF, 누설 차단\n쇼트 단위 분할 · ±10행 간격 · fold 안 SMOTE",
@@ -61,7 +61,7 @@ def fig_a():
 
 def fig_b():
     setup(10)
-    E = pd.read_pickle(EXP / "prospective_shots.pkl"); R = json.load(open(EXP / "prospective.json"))
+    E = pd.read_pickle(EXP / "prospective_shots.pkl"); R = json.load(open(EXP / "prospective.json", encoding='utf-8'))
     BLUE, RED, GRAY, INK, INK2, SURF, GRID = "#2a78d6", "#d03b3b", "#b9b8b2", "#0b0b0b", "#52514e", "#fcfcfb", "#e6e5e0"
 
     C = E[E["prod"] == "CN7"].reset_index(drop=True); tau = R["CN7"]["tau"]

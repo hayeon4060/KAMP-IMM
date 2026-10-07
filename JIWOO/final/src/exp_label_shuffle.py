@@ -78,7 +78,7 @@ def main():
             sh = np.array(rr["shuf"])
             print(f"  {p} {rr['method']:14s} real {rr['real']:.4f} | shuf mean {sh.mean():.4f} "
                   f"[{sh.min():.3f}, {sh.max():.3f}] p={(np.sum(sh >= rr['real']) + 1) / (len(sh) + 1):.4f}", flush=True)
-    json.dump(rows, open(EXP / "label_shuffle.json", "w"), ensure_ascii=False, default=float)
+    json.dump(rows, open(EXP / "label_shuffle.json", "w", encoding='utf-8'), ensure_ascii=False, default=float)
 
 
 if __name__ == "__main__":

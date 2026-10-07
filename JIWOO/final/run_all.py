@@ -2,7 +2,7 @@
 """전처리 → 학습 → 추론 → 결과 생성 → 재현 확인 자동 실행 (단일 진입점)
 
 사용법:  python run_all.py               # 사전등록 기본값 κ=10 (측면 배분 Beta 사전 강도)
-         python run_all.py --kappa 20    # 민감도 κ=20 (동결 원장 ledger_v1.csv와 바이트 동일하게 재현)
+         python run_all.py --kappa 20    # 민감도 κ=20 (동결 원장 ledger_v1.csv와 같은 값으로 재현)
          python run_all.py --experiments # 1~9단계 후 검증 실험 A(라벨 섞기)·B(사전등록 전향) + 그림 + 별도 재현 확인
 데이터:  ./data/dataset/ 에 대회 원본 csv 배치 (data/dataset/README.md)
 결과:    ./outputs/ (단계별 산출물은 README.md 표 참고)

@@ -17,4 +17,4 @@ for p in ('cn7', 'rg3'):
         f = lambda r, w=pr[2]: float(Xl[r.TimeStamp] @ w) if r.TimeStamp in Xl.index else np.nan
         out[f'{p} α={a}'] = evaluate(p, f)
         print(p, a, out[f'{p} α={a}'], flush=True)
-json.dump(out, open(OUTX / 'mil_sens_alpha.json', 'w'), indent=1)
+json.dump(out, open(OUTX / 'mil_sens_alpha.json', 'w', encoding='utf-8'), indent=1)

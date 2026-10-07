@@ -99,7 +99,7 @@ def load_rows(p, L):
 
 def main():
     L = load_all()['L']
-    prior_all = json.load(open(W_PRIOR))
+    prior_all = json.load(open(W_PRIOR, encoding='utf-8'))
     SH = {p: load_shots(p) for p in ('cn7', 'rg3')}
     OFF = pd.concat([SH[p][SH[p].split == '2차'] for p in SH], ignore_index=True)
     X_off, y_off = feats(OFF), OFF['y_shot'].values

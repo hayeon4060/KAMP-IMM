@@ -121,4 +121,4 @@ for p in ('cn7', 'rg3'):
     RES[p] = R
     print(p, json.dumps({k: v for k, v in R.items() if k != 'lobo_bags'}, ensure_ascii=False, default=float), flush=True)
     print(pd.DataFrame(per_bag).to_string(index=False), flush=True)
-json.dump(RES, open(OUTX / 'mil_result.json', 'w'), ensure_ascii=False, indent=1, default=float)
+json.dump(RES, open(OUTX / 'mil_result.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1, default=float)
