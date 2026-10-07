@@ -2,6 +2,8 @@
 
 ## RG3 추론 실행 (하연)
 
+**로컬 데이터부터 시작:** [입력 파일·환경·전체 실행 순서](reports/rg3_from_raw_run_order.md)를 참고해 **158 전처리 → 159 가스 중간 결과 → 157 연결 실행** 순서로 실행하세요. 새 원본 CSV는 Git에 추가하지 않고 `data/raw_input/`에 직접 준비합니다.
+
 이미 연결된 가스→미성형 코드를 다시 실행하려면 [157번 기존 파이프라인 실행 노트북](notebooks/157_rg3_existing_connected_pipeline_runner.ipynb)을 사용하세요. 누락되어 있던133/139/141 소스·공통 로더·입력 파일을 함께 제공합니다. [실행 순서와 범위](reports/rg3_existing_pipeline_reproduction.md)를 참고하세요.
 
 [155번 새 데이터 추론 노트북](notebooks/155_rg3_new_data_inference.ipynb)에서 동봉 가스 모델과 입력 예제로 바로 실행할 수 있습니다. 추론 시 재학습·평가 정답·저장 예측 CSV는 필요하지 않습니다. [사용 안내](reports/rg3_inference_usage.md)와 [156번 실행 검증](notebooks/156_rg3_inference_selfcheck.ipynb)을 참고하세요.

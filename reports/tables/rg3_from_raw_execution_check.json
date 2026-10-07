@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-07",
+  "initial_inputs": "seven local raw/official CSVs plus code only; no generated CSVs or model caches",
+  "preprocessing_158_passed": true,
+  "gas_intermediates_159_passed": true,
+  "connected_stages_executed": [133,139,141,143,148,151,152,153],
+  "rg3_input_rows": 591,
+  "rg3_features_max_difference_vs_previous": 0.0,
+  "gas": {"TP":8,"FP":6,"FN":9,"TN":560,"F1":0.5161290322580645},
+  "shortshot": {"TP":6,"FP":11,"FN":2,"TN":555,"F1":0.48},
+  "cascade": {"TP":14,"FP":17,"FN":11,"TN":549,"F1":0.5},
+  "missing_dependencies_fixed_during_check": ["op_metrics.py","148 shared history before151","151 before152"],
+  "independent_quality_validation": false,
+  "new_raw_csvs_published_in_this_commit": false
+}
