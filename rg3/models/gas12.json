@@ -1,0 +1,12 @@
+{
+  "format": "RG3_GAS_FINAL_FIT_V1",
+  "sha256": "3ffedd9c00b0800235e64c15041331236152262911223f0a8444ef0c19ad0a9d",
+  "sklearn_version": "1.9.1",
+  "numpy_version": "2.5.3",
+  "python_version": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "train_normal": 566,
+  "train_gas": 17,
+  "shortshot_available": false,
+  "evaluation": "full-refit inference, not independent validation",
+  "threshold_source": "labeled block-excluded normal calibration only"
+}

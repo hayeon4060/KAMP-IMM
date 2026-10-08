@@ -1,0 +1,3 @@
+*.joblib -text
+*.pkl -text
+*.ipynb text eol=lf
