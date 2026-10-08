@@ -20,7 +20,12 @@
 |---|---|---|
 | AP (무작위 기대값) | **0.465** (0.014) | 0.022 (0.021) |
 | 경보선: 경보 · 불량 · F1 | **6 · 6 · 0.522** | 0 · 0 · 0 |
-| 상위 5% 검사: 찾은 불량 · F1 | **10 · 0.256** | 2 · 0.047 |
+| 검사 예산 3% (운용): 찾은 불량 · F1 | **10 · 0.370** (37행 검사) | 0 · 0 |
+| (참고) 사전 설정 예산 5% | 10 · 0.256 (61행 검사) | 2 · 0.047 |
+
+검사 행 수 = 올림(평가 행 수 × 예산), 같은 점수는 시각·LH 순으로 정렬. 6단계 비교표(compare_table_v1.csv)의 budget_f1은 반올림을 써서 3%에서는 36행이 되지만, 비교표는 사전 설정 5% 기준이며 5%는 두 방식 모두 61행이다.
+
+운용 검사 예산은 3%다. 검사 1행 대 불량 유출 1행의 비용을 1:30으로 둘 때 총비용이 가장 낮은 예산으로, 공식 기간 개발 평가에서 확인해 정했다(3% 비용 247, 5% 271). 실시간 운용에서는 정상 참조 점수의 97.5% 분위를 넘는 쇼트를 검사 대상으로 하며, 공식 기간에 이 기준은 38행(3.1%)에 해당한다. 10번째 불량은 35~36번째 행이다(같은 쇼트 05:49의 LH·RH가 같은 점수라 나란히 놓이며, LH 우선 정렬에서 불량인 RH가 36번째). 3% 경계에 가까워, 다른 사건에서는 여유가 작을 수 있다. 결과를 보기 전에 정한 예산은 5%이며, 6단계 비교표(compare_table_v1.csv)는 이 사전 설정 5% 예산 기준이다.
 
 변경 이력은 `docs/CHANGE_1008_LOCAL_MAHA.md` (이전 제출안: 전역 Mahalanobis, 파생변수 17개).
 
@@ -93,12 +98,12 @@ outputs/                실행 시 생성
 | 3 | 확률 층 (공식 기간 Run 단위 leave-one-run-out OOF, 추가 기간은 공식 전체 적합 고정) | `prob/prob_results_beta.pkl`, `prob/prob_summary.json` |
 | 4 | 원장(행 단위 5,209행) + 헤드라인 + SHA-256 매니페스트 | `ledger/ledger_v1.csv`, `ledger/headline_v1.json` |
 | 5 | 원장 정합성 감사 (확률 범위·구간·경보 일관성·쇼트 정합·단조성) | `ledger/audit_v1.json` |
-| 6 | 비교표: 무작위·기저확률·RF 지도·기준선(강건 z)·제출 모델(Mahalanobis)·보정확률 (5% 예산), 최종 시스템 시뮬레이션, 3σ 관리도 | `ledger/ledger_v1_plus.csv`, `compare_table_v1.csv`, `final_system_sim.csv`, `baseline_3sigma.csv`, `baseline_3sigma_exRPM.csv` |
+| 6 | 비교표: 무작위·기저확률·RF 지도·기준선(강건 z)·제출 모델(Mahalanobis)·보정확률 (사전 설정 5% 예산), 최종 시스템 시뮬레이션, 3σ 관리도 | `ledger/ledger_v1_plus.csv`, `compare_table_v1.csv`, `final_system_sim.csv`, `baseline_3sigma.csv`, `baseline_3sigma_exRPM.csv` |
 | 7 | 초품검사 그리드(T×N), 비용표(1:10·1:30·1:100), CN7 추가 기간 Brier 기여 분해, 경보 덩어리 | `ledger/firstarticle_grid_{제품}_{기간}.csv`, `cost_table_beta.csv`, `brier_decomp_cn7_extra.csv`, `alarm_clusters.csv` |
 | 8 | 제출용 예측 파일 | `pred/pred_official.csv` (공식 2차 2,393행, OOF), `pred/pred_prospective.csv` (추가 기간 2,816행; 파일 이름의 prospective는 '추가 기간'을 뜻함) |
 | 9 | 재현 확인 | 화면 표 + `ledger/selfcheck.csv` |
 | E1 (`--experiments`) | 검증 실험 A 라벨 섞기: 같은 절차를 진짜 라벨과 섞은 라벨(RF 20회, 강건 z 1,000회)에 적용 — ① 분할 전 SMOTE→RF→무작위 5-fold(가이드북식) ② 쇼트 단위 분할·±10행 간격·fold 안 SMOTE RF ③ 기준선 강건 z(라벨 없음) | `experiments/label_shuffle.json` |
-| E2 (`--experiments`) | 검증 실험 B 기준선 설정 고정 후향 평가(`docs/PREREG_BASELINE_z_1004.md`): 공식 기간에서 고정한 강건 z·임계값(공식 상위 5%)을 추가 기간에 그대로 적용. 출력의 Fisher p는 참고값(아래 5절) | `experiments/prospective.json`, `pred_prospective_baseline.csv`, `prospective_shots.pkl` |
+| E2 (`--experiments`) | 검증 실험 B 기준선 설정 고정 후향 평가(`docs/PREREG_BASELINE_z_1004.md`): 공식 기간에서 고정한 강건 z·임계값(사전 설정: 공식 상위 5%)을 추가 기간에 그대로 적용. 출력의 Fisher p는 참고값(아래 5절) | `experiments/prospective.json`, `pred_prospective_baseline.csv`, `prospective_shots.pkl` |
 | E3 (`--experiments`) | 그림 | `experiments/fig_A_label_shuffle.png`, `fig_B_prospective_cn7.png` |
 | E4 (`--experiments`) | 검증 실험 재현 확인 (별도 PASS 표) | 화면 표 + `experiments/exp_selfcheck.csv` |
 
