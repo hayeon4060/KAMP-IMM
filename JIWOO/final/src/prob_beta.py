@@ -1,9 +1,13 @@
 """확률 층 (사전등록 docs/PREREG_BETA_W.md)
 
-최종 점수(LW Mahalanobis) → 풀링 로지스틱(log 점수) → Venn-Abers 보정·구간 [p0, p1]
+최종 점수(국소 Mahalanobis, dev26·k=300) → log 점수 → Venn-Abers 보정·구간(순서 보존) [p0, p1]
 → 측면 배분 w (Beta 사전 κ=10, 외부 ERR 집계 w_prior.json) + 캐비티 기저(Jeffreys, 전향은 비경보 행 순차 갱신)
 → 행(부품) 확률 p = 1 − (1 − w·p_shot)(1 − p_base), 구간은 p0/p1을 같은 식에 통과.
 보정 OOF = 공식 Run 단위 leave-one-run-out(두 제품 풀링). 전향 = 공식 전체 적합 고정.
+[1008 변경 — 탐지기 교체 후, 결과 확인 뒤 변경(사후)] 로지스틱 단계를 빼고 log 점수를 Venn-Abers에 직접 넣는다.
+ 이유: CN7 불량이 한 Run(10/16)에만 있어, 그 Run을 뺀 보정 학습(RG3 + CN7 무불량 Run)에서 로지스틱 기울기가
+ 음수(−0.32)로 학습되어 점수 순서가 뒤집혔다. 보정은 탐지기 순서를 바꾸지 않아야 하므로(단조 증가),
+ 등위 회귀만으로 보정한다. 로지스틱 계수는 참고로만 기록.
 출력: outputs/prob/prob_results_beta.pkl, prob_summary.json
 """
 import json
@@ -68,14 +72,17 @@ def load_shots(p):
     sh['prod'] = p
     sh['since_start'] = sh.groupby('run_id').cumcount()
     sh['y_shot'] = sh.PassOrFail.astype(int)
-    devs = sh[[f'dev_{v}' for v in EV]].values
-    order = np.argsort(-np.abs(np.nan_to_num(devs)), 1)[:, :3]
-    sh['top3'] = [', '.join(f'{SHORT[EV[j]]}({devs[i, j]:+.1f})' for j in order[i]) for i in range(len(sh))]
+    if 'top3_local' in sh.columns:                 # 국소 Mahalanobis 기여 상위 3 (이름(기여%, 편차))
+        sh['top3'] = sh['top3_local'].astype(str)
+    else:
+        devs = sh[[f'dev_{v}' for v in EV]].values
+        order = np.argsort(-np.abs(np.nan_to_num(devs)), 1)[:, :3]
+        sh['top3'] = [', '.join(f'{SHORT[EV[j]]}({devs[i, j]:+.1f})' for j in order[i]) for i in range(len(sh))]
+    REL = {'dv_R1': '충전시간×사출속도', 'dv_R2': '계량(시간×RPM÷위치)', 'dv_R3': '보압시간',
+           'dv_R4': '절환압/사출압', 'dv_R5': '기타 시간'}
     rel = []
-    for fa, fr in zip(sh['fill_anomaly'].values, sh['dev_flow_res'].values):
-        parts = []
-        if np.isfinite(fa) and abs(fa) >= 3: parts.append('충전시간×사출속도')
-        if np.isfinite(fr) and abs(fr) >= 3: parts.append('사출압력/속도(흐름저항)')
+    for i in range(len(sh)):
+        parts = [nm for c, nm in REL.items() if c in sh.columns and np.isfinite(sh[c].iat[i]) and abs(sh[c].iat[i]) >= 3]
         rel.append(' + '.join(parts))
     sh['relation'] = rel
     return sh
@@ -108,14 +115,14 @@ def main():
     p0 = np.full(len(OFF), np.nan); p1 = np.full(len(OFF), np.nan)
     for r in OFF.run_id.unique():
         te = (OFF.run_id == r).values; tr = ~te
-        m = fit_logistic(X_off[tr], y_off[tr])
-        p0[te], p1[te] = venn_abers(m.decision_function(X_off[tr]), y_off[tr], m.decision_function(X_off[te]))
+        # 단조 보정: log 점수를 그대로 Venn-Abers(등위 회귀)에 넣어 점수 순서를 보존 (1008 변경, 아래 docstring)
+        p0[te], p1[te] = venn_abers(X_off[tr, 0], y_off[tr], X_off[te, 0])
     OFF['p0'], OFF['p1'] = p0, p1
     OFF['p_shot'] = p1 / (1 - p0 + p1)
 
     # ---- 전향: 공식 전체 적합 고정 ----
-    m_full = fit_logistic(X_off, y_off)
-    z_cal = m_full.decision_function(X_off)
+    m_full = fit_logistic(X_off, y_off)                 # (참고) 계수 기록용 — 확률 계산에는 쓰지 않음
+    z_cal = X_off[:, 0]
     coefs = dict(zip(['log_score'], m_full.coef_[0].round(3).tolist()))
     coefs['intercept'] = round(float(m_full.intercept_[0]), 3)
 
@@ -126,7 +133,7 @@ def main():
         ext = sh[sh.split == '추가'].reset_index(drop=True)
         tau = float(np.quantile(off['score'], TAU_Q))
         if len(ext):
-            e0, e1 = venn_abers(z_cal, y_off, m_full.decision_function(feats(ext)))
+            e0, e1 = venn_abers(z_cal, y_off, feats(ext)[:, 0])
             ext['p0'], ext['p1'] = e0, e1
             ext['p_shot'] = e1 / (1 - e0 + e1)
 

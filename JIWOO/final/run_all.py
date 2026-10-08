@@ -2,7 +2,7 @@
 """전처리 → 학습 → 추론 → 결과 생성 → 재현 확인 자동 실행 (단일 진입점)
 
 사용법:  python run_all.py               # 사전등록 기본값 κ=10 (측면 배분 Beta 사전 강도)
-         python run_all.py --kappa 20    # 민감도 κ=20 (동결 원장 ledger_v1.csv와 같은 값으로 재현)
+         python run_all.py --kappa 20    # 민감도 κ=20 (동결 원장 ledger_v1.csv와 바이트 동일하게 재현)
          python run_all.py --experiments # 1~9단계 후 검증 실험 A(라벨 섞기)·B(사전등록 전향) + 그림 + 별도 재현 확인
 데이터:  ./data/dataset/ 에 대회 원본 csv 배치 (data/dataset/README.md)
 결과:    ./outputs/ (단계별 산출물은 README.md 표 참고)
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     paths.ensure_dirs()
     step(1, '전처리: 1차↔2차 연결, 샷·Run 테이블, 기준값, 측면 사전', s1_prep)
     step(2, '최종 탐지기 학습(비라벨 정상) · 점수(라벨 샷)', s2_model)
-    step(3, '확률 층 (로지스틱 → Venn-Abers → Beta 측면 배분 → 행 확률)', s3_prob)
+    step(3, '확률 층 (log 점수 → Venn-Abers → Beta 측면 배분 → 행 확률)', s3_prob)
     step(4, '원장·헤드라인·SHA 매니페스트', s4_ledger)
     step(5, '원장 정합성 감사', s5_audit)
     step(6, '비교표 (z, RF, 3σ 기준선 포함)', s6_compare)

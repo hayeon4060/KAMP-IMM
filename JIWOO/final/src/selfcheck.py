@@ -3,10 +3,10 @@
 기준값
 - 점수 기반 헤드라인(행·불량·AP·경보·TP)과 비교표의 z·RF AP: 확률 층과 무관 → κ와 상관없이 항상 확인
 - 확률 지표(BSS)와 확률 기반 비교표 행: κ(측면 배분 Beta 사전 강도)에 따라 다름
-    κ=10 (사전등록 기본값, 보고서 기준 원장 v2): CN7 BSS 전향 0.285 / 공식 OOF 0.056,
-                              Maha+보정확률 AP CN7 전향 0.813·공식 0.194, ledger_v1.csv SHA-256 앞 16자 c107e5a443f110ff
-    κ=20 (민감도)           : CN7 BSS 전향 0.297 / 공식 OOF 0.063, Maha+보정확률 AP CN7 전향 0.836·공식 0.193,
-                              ledger_v1.csv SHA-256 앞 16자 221ec962e52fd43d
+    κ=10 (사전등록 기본값, 1008 국소 Mahalanobis 원장): CN7 BSS 전향 0.215 / 공식 OOF 0.02,
+                              Maha+보정확률 AP CN7 전향 0.558·공식 0.179, ledger_v1.csv SHA-256 앞 16자 c3c520b85a0fc23b
+    κ=20 (민감도)           : CN7 BSS 전향 0.242 / 공식 OOF 0.032, Maha+보정확률 AP CN7 전향 0.602·공식 0.175,
+                              ledger_v1.csv SHA-256 앞 16자 a3b938c0641089c1
 - 원장 판정은 값 지문(ledger.value_fingerprint)으로 한다: 실수가 아닌 열의 해시는 완전 일치, 실수 열의 가중합은 상대오차 1e-9 이내.
   기준값은 src/ledger_ref.json. 바이트 해시는 운영체제·CPU에 따라 부동소수 마지막 자리가 달라지면 바뀔 수 있으므로
   참고로만 출력한다(기준 환경: 리눅스, Python 3.11).
@@ -24,20 +24,20 @@ FP_RTOL = 1e-9
 
 TOL = 0.0015
 REF_HEADLINE = {
-    'CN7_official': dict(rows=1211, defects=17, AP_score=0.373, alarms=10, TP_alarm=6),
-    'CN7_extra': dict(rows=2745, defects=11, AP_score=0.797, alarms=16, TP_alarm=10),
-    'RG3_official': dict(rows=1182, defects=25, AP_score=0.024, alarms=6, TP_alarm=0),
-    'RG3_extra': dict(rows=71, defects=7, AP_score=0.115, alarms=0),
+    'CN7_official': dict(rows=1211, defects=17, AP_score=0.465, alarms=6, TP_alarm=6),
+    'CN7_extra': dict(rows=2745, defects=11, AP_score=0.608, alarms=10, TP_alarm=8),
+    'RG3_official': dict(rows=1182, defects=25, AP_score=0.022, alarms=0, TP_alarm=0),
+    'RG3_extra': dict(rows=71, defects=7, AP_score=0.102, alarms=0),
 }
 REF_COMPARE_AP = {('CN7', 'official', '이탈도 z(비지도)'): 0.191, ('CN7', 'extra', '이탈도 z(비지도)'): 0.250,
                   ('CN7', 'official', 'RF 지도(±10간격)'): 0.014, ('CN7', 'extra', 'RF 지도(±10간격)'): 0.161}
 REF_BY_KAPPA = {
-    10: dict(bss={('cn7', 'prospective'): 0.285, ('cn7', 'official_oof'): 0.056},
-             compare={('CN7', 'extra', 'Maha+보정확률(Beta)'): 0.813, ('CN7', 'official', 'Maha+보정확률(Beta)'): 0.194},
-             ledger_sha='c107e5a443f110ff'),
-    20: dict(bss={('cn7', 'prospective'): 0.297, ('cn7', 'official_oof'): 0.063},
-             compare={('CN7', 'extra', 'Maha+보정확률(Beta)'): 0.836, ('CN7', 'official', 'Maha+보정확률(Beta)'): 0.193},
-             ledger_sha='221ec962e52fd43d'),
+    10: dict(bss={('cn7', 'prospective'): 0.215, ('cn7', 'official_oof'): 0.02},
+             compare={('CN7', 'extra', 'Maha+보정확률(Beta)'): 0.558, ('CN7', 'official', 'Maha+보정확률(Beta)'): 0.179},
+             ledger_sha='c3c520b85a0fc23b'),
+    20: dict(bss={('cn7', 'prospective'): 0.242, ('cn7', 'official_oof'): 0.032},
+             compare={('CN7', 'extra', 'Maha+보정확률(Beta)'): 0.602, ('CN7', 'official', 'Maha+보정확률(Beta)'): 0.175},
+             ledger_sha='a3b938c0641089c1'),
 }
 
 

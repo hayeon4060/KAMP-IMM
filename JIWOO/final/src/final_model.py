@@ -1,11 +1,13 @@
 """
-final_model.py — 최종 탐지기 (M_maha_free) 학습·테스트
+final_model.py — 최종 탐지기 (국소 Mahalanobis, dev26 · k=300) 학습·테스트
 
-  1) 학습 데이터 : unlabeled 정상 생산 샷 (2020-09-01 ~ 11-30, 우진2호기)
+  1) 학습 데이터 : unlabeled 정상 생산 샷 (우진2호기, 그 제품의 '평가 기간 이전' 전부 — 첫 labeled 샷 60분 전까지)
                    labeled 샷·labeled Run 시간창(±60분)·끼어든 이상 기록·짧은 Run·0 모드(비가동) 제거
-  2) 입력 변수   : 인과적 파생변수 17개 — 같은 Run의 '과거 샷'만 사용 (미래 정보 없음)
-  3) 학습        : reference 중앙값·IQR로 스케일 → ±20 클리핑 → Ledoit-Wolf 공분산
-  4) 점수        : Mahalanobis 거리 (클수록 불량 의심) → reference 분포 대비 백분위(pct)
+  2) 입력 변수   : 인과적 파생변수 26개(dev26) = 원변수 21개의 Run 내 강건 편차 + 물리 관계 5개(R1~R5)의 강건 편차
+                   — 같은 Run의 '과거 샷'만 사용 (미래 정보 없음). 기존 17개(c17)도 계산해 출력(확률 층·설명용)
+  3) 학습        : reference 중앙값·IQR로 스케일 → ±20 클리핑 → 최근접 정상 300샷 검색 구조 저장
+  4) 점수        : 국소 Mahalanobis 거리 = 그 샷과 가장 비슷한 정상 300샷의 Ledoit-Wolf 평균·공분산 기준 거리
+                   (클수록 불량 의심) → reference 자기 제외 점수 분포 대비 백분위(pct)
   5) 임계값      : pct ≥ q  (q = 1 − 정상 오경보율, 라벨 없이 결정; 운용점 q = 0.999)
 라벨은 평가에만 사용.
 
@@ -21,6 +23,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn.covariance import LedoitWolf
+from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import average_precision_score, precision_recall_curve
 
 from paths import INTER, FINAL
@@ -30,7 +33,10 @@ BASE_DIR, OUT_DIR = str(INTER), str(FINAL)
 # ====================================================================== 설정 (결과 보기 전에 고정한 값)
 SEED = 42
 PRODUCTS = ('cn7', 'rg3')
-REF_PERIOD = ('2020-09-01', '2020-11-30')
+REF_PERIOD = None                                       # 고정 기간 대신 제품별 '평가 기간 이전' (ref_period)
+REF_START = '2020-01-01'
+K_LOCAL = 300                                           # 국소 기준 이웃 수 (사전 고정 판정 unsup_search2 C2, k=100~2000 평탄)
+NN_DECIMALS = 9                                         # 이웃 검색용 반올림 자리 (부동소수 끝자리 차이로 이웃이 바뀌지 않게)
 RUN_GAP_MIN, STOP_GAP_MIN, MIN_RUN_SHOTS = 60, 5, 10    # Run 구분: 60분 공백 = 새 Run, 10샷 미만 Run 제거
 MIN_CYCLE_SEC, CYCLE_DEV_SEC = 50, 2                    # 끼어든 이상 기록 판정
 ZERO_MODE_BARREL = 100                                  # 배럴1 온도 < 100℃ = 비가동(0 모드)
@@ -41,7 +47,7 @@ QS = (0.95, 0.98, 0.99, 0.995, 0.999)
 INITIAL = '초기허용불량'
 TYPE_GROUPS = {'가스': ['가스'], '미성형': ['미성형', '가스+미성형']}
 # 동결 기준 결과 (재현 확인용)
-EXPECTED = {('cn7', '①'): 0.373, ('rg3', '①'): 0.024, ('cn7', '②'): 0.212, ('rg3', '②'): 0.064}
+EXPECTED = {('cn7', '①'): 0.465, ('rg3', '①'): 0.022, ('cn7', '②'): 0.203, ('rg3', '②'): 0.054}
 
 raw = lambda c: f'{c}_raw'
 ALL_RAW = ['Injection_Time', 'Filling_Time', 'Plasticizing_Time', 'Cycle_Time', 'Clamp_Close_Time',
@@ -54,12 +60,27 @@ EVENT_VARS = ['Max_Injection_Speed', 'Filling_Time', 'Max_Injection_Pressure', '
               'Average_Back_Pressure', 'Cushion_Position', 'Plasticizing_Time', 'Cycle_Time']
 STATE_VARS = ['Mold_Temperature_3', 'Hopper_Temperature']
 
-# 최종 입력 변수 17개
-FEATURES = ([f'dev_{v}' for v in EVENT_VARS]                                    # 이벤트 편차 8
+# 기존(제출 1차) 입력 변수 17개 — 출력·확률 층 설명용으로 계속 계산
+C17 = ([f'dev_{v}' for v in EVENT_VARS]                                    # 이벤트 편차 8
             + ['fill_anomaly', 'ev_max_abs_dev']                                # 이벤트 요약 2
             + ['dev_Mold_Temperature_3', 'dev_Hopper_Temperature',              # 열 상태 6
                'mold_rise', 'hopper_rise', 'mold_slope20', 'hopper_slope20']
             + ['dev_flow_res'])                                                 # 흐름저항 1
+
+# 물리 관계 5개 (원값으로 계산 → Run 내 강건 편차). step = 기록 단위 하한
+REL_STEP = {'R1': 1e-3, 'R2': 1e-3, 'R3': 1e-2, 'R4': 1e-3, 'R5': 1e-2}
+REL_NAME = {'R1': '충전시간×사출속도', 'R2': '계량(시간×RPM÷위치)', 'R3': '보압시간', 'R4': '절환압/사출압',
+            'R5': '기타 시간'}
+# 최종 입력 변수 26개 (dev26)
+FEATURES = [f'dv_{v}' for v in ALL_RAW] + [f'dv_{r}' for r in REL_STEP]
+SHORT_NAME = {'Injection_Time': '사출시간', 'Filling_Time': '충전시간', 'Plasticizing_Time': '계량시간',
+              'Cycle_Time': '사이클', 'Clamp_Close_Time': '형체시간', 'Cushion_Position': '쿠션',
+              'Plasticizing_Position': '계량위치', 'Max_Injection_Speed': '사출속도', 'Max_Screw_RPM': '스크루RPM',
+              'Max_Injection_Pressure': '사출압력', 'Max_Switch_Over_Pressure': '절환압력',
+              'Average_Back_Pressure': '평균배압', 'Hopper_Temperature': '호퍼온도',
+              'Mold_Temperature_3': '금형온도3', 'Mold_Temperature_4': '금형온도4',
+              **{f'Barrel_Temperature_{i}': f'배럴{i}온도' for i in range(1, 7)}}
+FEAT_NAME = {**{f'dv_{v}': SHORT_NAME[v] for v in ALL_RAW}, **{f'dv_{r}': REL_NAME[r] for r in REL_STEP}}
 
 
 # ====================================================================== 1. 데이터
@@ -127,6 +148,12 @@ def build_reference(p, labeled_shots, base_dir=BASE_DIR, period=REF_PERIOD):
     return u, log
 
 
+def ref_period(labeled_shots):
+    """평가 기간 이전 = 그 제품의 첫 labeled 샷 60분 전까지 (미래 정보 없음)"""
+    end = pd.to_datetime(labeled_shots['TimeStamp']).min() - pd.Timedelta(minutes=RUN_GAP_MIN)
+    return (REF_START, str(end))
+
+
 # ====================================================================== 2. 파생변수 (인과적: 같은 Run의 과거 샷만)
 def resolution(x):
     """기록 단위(0.01 / 0.1 등) = 고유값 간 최소 간격"""
@@ -180,8 +207,23 @@ def _by_run(d, col, func):
     return out
 
 
-def make_features(df, steps, fr_step):
-    """df: run_id, TimeStamp, *_raw (샷 단위). 반환: FEATURES가 추가된 df (Run → 시간 순)"""
+def relations(d):
+    """물리 관계 5개 원값 (R1 충전×속도, R2 계량, R3 보압시간, R4 압력비, R5 기타 시간)"""
+    r = lambda c: d[raw(c)].astype(float)
+    lg = lambda c: np.log(r(c).where(r(c) > 0))
+    out = pd.DataFrame({
+        'R1': lg('Filling_Time') + lg('Max_Injection_Speed'),
+        'R2': lg('Plasticizing_Time') + lg('Max_Screw_RPM') - lg('Plasticizing_Position'),
+        'R3': r('Injection_Time') - r('Filling_Time'),
+        'R4': r('Max_Switch_Over_Pressure') / r('Max_Injection_Pressure'),
+        'R5': r('Cycle_Time') - r('Injection_Time') - r('Plasticizing_Time') - r('Clamp_Close_Time'),
+    }, index=d.index)
+    return out.replace([np.inf, -np.inf], np.nan)
+
+
+def make_features(df, steps, fr_step, steps_all=None):
+    """df: run_id, TimeStamp, *_raw (샷 단위). 반환: C17 + FEATURES(dev26)가 추가된 df (Run → 시간 순)
+    steps_all: 원변수 21개 기록 단위(학습 reference에서 구해 모델에 저장한 값). 없으면 df에서 계산"""
     d = df.sort_values(['run_id', 'TimeStamp']).reset_index(drop=True).copy()
     st = {v: resolution(d[raw(v)]) for v in EVENT_VARS + STATE_VARS}
     st.update({k: v for k, v in (steps or {}).items() if k in st})
@@ -205,6 +247,16 @@ def make_features(df, steps, fr_step):
     d['flow_res'] = d[raw('Max_Injection_Pressure')] / d[raw('Max_Injection_Speed')]
     fr = 1e-4 if (fr_step is None or pd.isna(fr_step)) else fr_step
     d['dev_flow_res'] = _by_run(d, 'flow_res', lambda a: causal_robust_dev(a, fr))
+
+    # dev26: 원변수 21개 + 관계 5개의 Run 내 강건 편차
+    sa = {v: resolution(d[raw(v)]) for v in ALL_RAW}
+    sa.update({k: v for k, v in (steps_all or {}).items() if k in sa})
+    for v in ALL_RAW:
+        d[f'dv_{v}'] = _by_run(d, raw(v), lambda a, s=sa[v]: causal_robust_dev(a, s))
+    rel = relations(d)
+    for k, stp in REL_STEP.items():
+        d[k] = rel[k].values
+        d[f'dv_{k}'] = _by_run(d, k, lambda a, s=stp: causal_robust_dev(a, s))
     return d
 
 
@@ -223,10 +275,11 @@ def load_scales(p, ref_shots, base_dir=BASE_DIR):
 
 # ====================================================================== 3. 모델
 class FinalModel:
-    """정상 기준 Mahalanobis 이상탐지 (M_maha_free)"""
+    """정상 기준 국소 Mahalanobis 이상탐지 — 그 샷과 가장 비슷한 정상 k샷의 Ledoit-Wolf 평균·공분산으로 거리 계산"""
 
-    def __init__(self, cols=FEATURES):
+    def __init__(self, cols=FEATURES, k=K_LOCAL):
         self.cols = list(cols)
+        self.k = int(k)
 
     def _X(self, df):
         return df[self.cols].replace([np.inf, -np.inf], np.nan).values.astype(float)
@@ -241,15 +294,42 @@ class FinalModel:
         q75, q25 = np.nanpercentile(X0, [75, 25], axis=0)
         sd = np.nanstd(X0, axis=0)
         self.iqr = np.where(q75 - q25 > 1e-9, q75 - q25, np.where(sd > 1e-9, sd, 1.0))
-        X = self._prep(ref_feat)
-        self.lw = LedoitWolf().fit(X)
-        self.s_ref = np.sort(np.sqrt(self.lw.mahalanobis(X)))
-        self.n_ref = len(X)
+        self.X = self._prep(ref_feat)
+        self.nn = NearestNeighbors(n_neighbors=self.k + 1, algorithm='brute').fit(np.round(self.X, NN_DECIMALS))   # 이웃 검색은 반올림 값으로(플랫폼 간 동일)
+        self.lw = LedoitWolf().fit(self.X)                              # (참고) 전역 축소계수 기록용
+        self.s_ref = np.sort(self._local(self.X, drop_self=True)[0])     # 자기 제외 점수 = 정상 분포
+        self.n_ref = len(self.X)
         return self
 
+    def _local(self, Q, drop_self=False):
+        """반환: 거리, 변수별 기여(z·Pz / d², 쇼트마다 합 1)"""
+        idx = self.nn.kneighbors(np.round(Q, NN_DECIMALS), return_distance=False)
+        idx = idx[:, 1:] if drop_self else idx[:, :self.k]
+        d = np.empty(len(Q)); C = np.zeros((len(Q), Q.shape[1]))
+        for i, q in enumerate(Q):
+            lw = LedoitWolf().fit(self.X[idx[i]])
+            z = q - lw.location_
+            pz = lw.precision_ @ z
+            d2 = float(z @ pz)
+            d[i] = np.sqrt(max(d2, 0.0))
+            if d2 > 0:
+                C[i] = z * pz / d2
+        return d, C
+
     def score(self, df):
-        """이상 점수 (Mahalanobis 거리)"""
-        return np.sqrt(self.lw.mahalanobis(self._prep(df)))
+        """이상 점수 (국소 Mahalanobis 거리)"""
+        return self._local(self._prep(df))[0]
+
+    def top3(self, df):
+        """샷별 기여 상위 3개 변수 (이름(기여%, 편차))"""
+        Xr = self._X(df)
+        _, C = self._local(self._prep(df))
+        out = []
+        for i in range(len(C)):
+            o = np.argsort(-C[i])[:3]
+            out.append(', '.join(f'{FEAT_NAME.get(self.cols[j], self.cols[j])}({100 * C[i, j]:.0f}%, '
+                                 f'{np.nan_to_num(Xr[i, j]):+.1f})' for j in o))
+        return out
 
     def pct(self, s):
         """reference 분포 대비 백분위 (0.999 = 정상 샷의 0.1%만 이보다 높음)"""
@@ -404,23 +484,28 @@ def train(base_dir=BASE_DIR, products=PRODUCTS, out_dir=OUT_DIR, verbose=True):
     LOG, PAR, MODELS = [], [], {}
     for p in products:
         shots = load_labeled_shots(p, base_dir)                   # labeled는 '시간대 제거'에만 사용 (라벨 X)
-        ref_shots, log = build_reference(p, shots, base_dir)
+        period = ref_period(shots)                                # 평가 기간 이전 정상만 (미래 정보 없음)
+        ref_shots, log = build_reference(p, shots, base_dir, period=period)
         steps, fr_step, src = load_scales(p, ref_shots, base_dir)
-        ref_feat = make_features(ref_shots, steps, fr_step)
+        steps_all = {v: resolution(ref_shots[raw(v)]) for v in ALL_RAW}
+        steps_all.update(steps)
+        ref_feat = make_features(ref_shots, steps, fr_step, steps_all)
         if len(ref_feat) > REF_MAX:
             ref_feat = ref_feat.sample(REF_MAX, random_state=SEED).reset_index(drop=True)
 
         model = FinalModel().fit(ref_feat)
-        model.steps, model.fr_step, model.product = steps, fr_step, p
+        model.steps, model.fr_step, model.steps_all, model.product = steps, fr_step, steps_all, p
+        model.ref_period = period
         model.save(f'{out_dir}/{p}_final_model.pkl')
         MODELS[p] = model
 
-        log.update({'제품': p, '기준값 출처': src, '학습 샷(최종)': model.n_ref,
-                    'Ledoit-Wolf 축소계수': float(model.lw.shrinkage_)})
+        log.update({'제품': p, '기준값 출처': src, '학습 기간': f'{period[0]} ~ {period[1]}', '학습 샷(최종)': model.n_ref,
+                    '국소 이웃 수 k': model.k,
+                    'Ledoit-Wolf 축소계수(전역, 참고)': float(model.lw.shrinkage_)})
         LOG.append(log)
         PAR.append(pd.DataFrame({'제품': p, '변수': model.cols, '중앙값': model.med, 'IQR(스케일)': model.iqr}))
         if verbose:
-            print(f'[{p}] 학습 완료: reference {model.n_ref:,}샷, 변수 {len(model.cols)}개 '
+            print(f'[{p}] 학습 완료: reference {model.n_ref:,}샷({period[0]}~{period[1][:10]}), 변수 {len(model.cols)}개, k={model.k} '
                   f'→ {p}_final_model.pkl')
     T = {'data_log': pd.DataFrame(LOG), 'params': pd.concat(PAR, ignore_index=True), 'models': MODELS}
     T['data_log'].to_csv(f'{out_dir}/data_log.csv', index=False, encoding='utf-8-sig')
@@ -442,10 +527,11 @@ def test(base_dir=BASE_DIR, products=PRODUCTS, out_dir=OUT_DIR, verbose=True):
         model = FinalModel.load(path)
 
         shots = load_labeled_shots(p, base_dir)
-        lab_feat = make_features(shots, model.steps, model.fr_step)   # 전체 시간 흐름 그대로 (초기허용·제외 포함)
+        lab_feat = make_features(shots, model.steps, model.fr_step, model.steps_all)   # 전체 흐름 그대로
         lab_feat['score'] = model.score(lab_feat)
         lab_feat['pct'] = model.pct(lab_feat['score'])
-        out_cols = ['TimeStamp', 'run_id', 'split', 'PassOrFail', 'Reason', 'score', 'pct'] + FEATURES
+        lab_feat['top3_local'] = model.top3(lab_feat)
+        out_cols = ['TimeStamp', 'run_id', 'split', 'PassOrFail', 'Reason', 'score', 'pct', 'top3_local'] + C17 + FEATURES
         lab_feat[[c for c in out_cols if c in lab_feat.columns]].to_csv(
             f'{out_dir}/{p}_scores.csv', index=False, encoding='utf-8-sig')
         SCORES[p] = lab_feat
@@ -491,7 +577,8 @@ def score_new_shots(shots, p, model_dir=OUT_DIR):
     반환: shots + 파생변수 + score, pct  (pct ≥ q 이면 검사 대상)
     """
     model = FinalModel.load(f'{model_dir}/{p}_final_model.pkl')
-    f = make_features(shots, model.steps, model.fr_step)          # 학습 때 저장한 기준값 그대로
+    f = make_features(shots, model.steps, model.fr_step, model.steps_all)   # 학습 때 저장한 기준값 그대로
     f['score'] = model.score(f)
+    f['top3_local'] = model.top3(f)
     f['pct'] = model.pct(f['score'])
     return f
