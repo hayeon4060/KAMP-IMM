@@ -1,3 +1,5 @@
+# 탐색 코드(notebooks, src, unsup_search*, unlabeled_episode) 실행 환경: Python 3.11 (검증: 3.11.9 / 3.11.15)
+# 최종 제출 코드는 final/requirements.txt (별도 고정) 를 사용
 pandas==2.2.2
 numpy==1.26.4
 matplotlib==3.8.4
@@ -6,3 +8,8 @@ scikit-learn==1.4.2
 jupyter==1.0.0
 ipykernel==6.29.4
 openpyxl==3.1.2
+scipy==1.17.1
+joblib==1.6.0
+pillow==12.3.0
+# unsup_search s3(자기지도·신경망), unsup_search3/4 AE·Deep SVDD 에만 필요 (CPU 판)
+torch==2.5.1

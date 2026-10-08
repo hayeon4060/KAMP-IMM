@@ -10,7 +10,7 @@ cd kamp_injection
 
 ### 0-2. 파이썬 환경
 ```bash
-conda create -n kamp python=3.11 -y
+conda create -n kamp python=3.11 -y   # Python 3.11 (검증: 3.11.9 / 3.11.15)
 conda activate kamp
 pip install -r requirements.txt
 python -m ipykernel install --user --name kamp --display-name "kamp"

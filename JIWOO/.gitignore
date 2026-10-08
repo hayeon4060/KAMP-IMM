@@ -10,3 +10,22 @@ __pycache__/
 # 작업용 임시 노트북
 anything.ipynb
 scratch*.ipynb
+
+# 데이터·파생물 (대회 규정 + 블라인드) — 저장소에 올리지 않음
+data/
+**/data/dataset/
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.joblib
+outputs/
+**/outputs/
+.env
+.env.*
+# 요약 표 예외: 현재 저장소에 올리는 CSV 요약 표는 없음. 필요하면 아래처럼 개별 예외를 명시
+# !reports/tables/<요약표이름>.csv
