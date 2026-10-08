@@ -1,8 +1,15 @@
 .venv/
+.venv-smartfactory-repro/
+.venv-jiwoo-final/
 tmp/
 __pycache__/
 .ipynb_checkpoints/
 
 # 원본 데이터는 로컬에서만 관리
 data/
-
+hayeon/data/
+dataset/runtime/
+cn7/outputs/
+cn7/predictions/
+rg3/predictions/
+cn7/vendor/jiwoo_final/outputs/

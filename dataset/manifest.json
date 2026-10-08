@@ -1,0 +1,30 @@
+{
+  "dataset/original/labeled_data.csv": {
+    "bytes": 4582069,
+    "sha256": "e8d375c8e0c2cdfc309baf01ac2203fc2edb6e9728e836119042f9670cd46b51"
+  },
+  "dataset/original/moldset_labeled.csv": {
+    "bytes": 1533147,
+    "sha256": "d19e24f1e9c2764b1ba20fbce042058d009d095930bbae37895f2d2f352158cf"
+  },
+  "dataset/original/unlabeled_data.csv.gz": {
+    "bytes": 21690579,
+    "sha256": "e3ef4fccd392423f577e406ac9601440d05421cd5121328ec25e51c1875d8cda"
+  },
+  "dataset/kamp/moldset_labeled_cn7.csv": {
+    "bytes": 561704,
+    "sha256": "f870b0c259297f20d503f2e2739966553e5db5ef1deb0cc7513eefa4bbfa2753"
+  },
+  "dataset/kamp/moldset_labeled_rg3.csv": {
+    "bytes": 551941,
+    "sha256": "14aab21476eea02c823ccb00f82800040280d805dbce5a3eb7c11b176a9e5aa4"
+  },
+  "dataset/kamp/moldset_unlabeled_cn7.csv": {
+    "bytes": 16643923,
+    "sha256": "110a2d408d6cb8002caf26f50c06d06e42998e067e708788a3e37e9d1769b978"
+  },
+  "dataset/kamp/moldset_unlabeled_rg3.csv": {
+    "bytes": 16984495,
+    "sha256": "ef9b30014ce4d6671a72f5a4c3f286802b71ff08d52f9d6a551a3f81e6af8c9c"
+  }
+}

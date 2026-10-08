@@ -1,0 +1,5 @@
+# Preserve released raw/processed data bytes across Windows/Linux clones.
+dataset/**/*.csv -text
+dataset/**/*.gz -text
+*.joblib -text
+*.pkl -text

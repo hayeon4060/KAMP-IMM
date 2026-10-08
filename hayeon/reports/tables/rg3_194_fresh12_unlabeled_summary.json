@@ -1,0 +1,45 @@
+{
+  "raw_unlabeled_rows": 72484,
+  "raw_unlabeled_unique_shots": 66145,
+  "known_shots_excluded": 387,
+  "training_normal": 566,
+  "training_gas": 17,
+  "classifiers": 12,
+  "counts": [
+    {
+      "cohort": "all_unknown",
+      "shots": 29236,
+      "ready": 28710,
+      "abstained": 526,
+      "candidates": 734,
+      "alarm_percent": 2.5566004876349706
+    },
+    {
+      "cohort": "operating_proxy",
+      "shots": 16069,
+      "ready": 15797,
+      "abstained": 272,
+      "candidates": 731,
+      "alarm_percent": 4.6274609102994235
+    },
+    {
+      "cohort": "nonoperating_proxy",
+      "shots": 13167,
+      "ready": 12913,
+      "abstained": 254,
+      "candidates": 3,
+      "alarm_percent": 0.023232401455897157
+    }
+  ],
+  "cuts": {
+    "baseline": 0.5063582715704156,
+    "expert": 0.2904605070421565,
+    "thermal": 0.5897268810636868,
+    "pressure": 0.6646442905431882,
+    "delta": 0.70001220703125,
+    "thermal_gate": -1.8340121577667325
+  },
+  "interpretation": "gas candidates, unknown truth; not verified defects or accuracy",
+  "calibration": "frozen labeled OOF normal scores, no unlabeled labels or alarm-rate targeting",
+  "operating_proxy": "Barrel_Temperature_1 >=100, heuristic not actual operation labels"
+}

@@ -1,0 +1,5 @@
+# 원본 데이터·생성물은 저장소에 올리지 않음 (대회 규정)
+data/dataset/*.csv
+outputs/
+__pycache__/
+*.pyc

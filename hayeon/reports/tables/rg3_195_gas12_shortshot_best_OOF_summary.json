@@ -1,0 +1,10 @@
+{
+  "N": 591,
+  "defects": 25,
+  "TP": 14,
+  "FP": 18,
+  "FN": 11,
+  "TN": 548,
+  "F1": 0.49122807017543857,
+  "evaluation": "development block-excluded OR; not untouched independent test"
+}

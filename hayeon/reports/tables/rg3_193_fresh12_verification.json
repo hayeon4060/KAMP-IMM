@@ -1,0 +1,20 @@
+{
+  "classifiers": 12,
+  "TP": 8,
+  "FP": 7,
+  "FN": 9,
+  "TN": 559,
+  "F1": 0.5,
+  "all583_predictions_match": true,
+  "fit_calls": 26,
+  "all_fit_timestamp_overlap_zero": true,
+  "heldout_label_flip_first_block_maxdiff": {
+    "baseline": 5.551115123125783e-17,
+    "expert": 0.0,
+    "thermal": 1.1102230246251565e-16,
+    "pressure": 1.1102230246251565e-16
+  },
+  "input_sha256": "3531f192d80e082c9f9b4d83b72c0b6c9ef3b26530c195584969edc8c8c5dc27",
+  "evaluation": "existing 5-block development reproduction, not unseen independent validation",
+  "model_exported": false
+}

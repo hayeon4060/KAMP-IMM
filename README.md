@@ -1,12 +1,21 @@
 # KAMP-IMM
 
-## RG3 추론 실행 (하연)
+## 제품별 실행 패키지 (2026-10-08)
 
-**로컬 데이터부터 시작:** [입력 파일·환경·전체 실행 순서](reports/rg3_from_raw_run_order.md)를 참고해 **158 전처리 → 159 가스 중간 결과 → 157 연결 실행** 순서로 실행하세요. 새 원본 CSV는 Git에 추가하지 않고 `data/raw_input/`에 직접 준비합니다.
+- **CN7:** [사용 안내](cn7/README.md) — 지우 최신 final 통합 이상 경보. `01_preprocess_train.ipynb` → `02_predict.ipynb`.
+- **RG3:** [사용 안내](rg3/README.md) — 하연 가스12개 + 최고 미성형 저장 모델. `01_preprocess_train.ipynb` → `02_predict.ipynb`.
+- **데이터:** [원본/KAMP/가공 데이터 구분](dataset/README.md).
+- **기존 실험:** [hayeon 보관 폴더](hayeon/README.md).
 
-이미 연결된 가스→미성형 코드를 다시 실행하려면 [157번 기존 파이프라인 실행 노트북](notebooks/157_rg3_existing_connected_pipeline_runner.ipynb)을 사용하세요. 누락되어 있던133/139/141 소스·공통 로더·입력 파일을 함께 제공합니다. [실행 순서와 범위](reports/rg3_existing_pipeline_reproduction.md)를 참고하세요.
+두 제품은 검증 환경이 다르므로 각각 가상환경을 먼저 생성·활성화한 뒤 의존성을 설치한다. 예측 노트북은 저장 모델을 로드하며 재학습하지 않는다. 샷 기준/행 기준 지표 및 개발검증/새 독립검증을 구분한다.
 
-[155번 새 데이터 추론 노트북](notebooks/155_rg3_new_data_inference.ipynb)에서 동봉 가스 모델과 입력 예제로 바로 실행할 수 있습니다. 추론 시 재학습·평가 정답·저장 예측 CSV는 필요하지 않습니다. [사용 안내](reports/rg3_inference_usage.md)와 [156번 실행 검증](notebooks/156_rg3_inference_selfcheck.ipynb)을 참고하세요.
+## 이전 RG3 추론 안내 (과거50개 모델, 보관용)
+
+이전158/159/157실험은 `hayeon/` 아래로이동했다. 아래안내는이전50개가스모델기록이며새배포실행순서는위제품별README를따른다.
+
+이전 연결 재현은 [157번 보관 노트북](hayeon/notebooks/157_rg3_existing_connected_pipeline_runner.ipynb), [실행 범위](hayeon/reports/rg3_existing_pipeline_reproduction.md)를 참고한다.
+
+[155번 이전 가스 추론](hayeon/notebooks/155_rg3_new_data_inference.ipynb), [사용 안내](hayeon/reports/rg3_inference_usage.md), [156번 검증](hayeon/notebooks/156_rg3_inference_selfcheck.ipynb)은이전모델보관용이다.
 
 155번은 S14/RG3 저장 가스 모델의 새 입력 추론입니다. 이 경로의 가스 음성은 `미성형 모델 미연결`로 표시합니다. 기존 최고 미성형·가스 연결의 학습/개발 평가 재실행은157번, 기존 미성형 비라벨 적용은145번으로 구분합니다.
 
